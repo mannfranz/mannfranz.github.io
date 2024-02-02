@@ -1,0 +1,124 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width; height=device-height;">
+<style>
+        #vid {
+        	height: 50vh;
+        }
+    </style>
+<title>maxvert vid</title>
+</head>
+<body style="background-color: black; margin: 0;">
+<div style="display: flex;justify-content: center;align-items: center;height: 100vh;">
+<video id= "vid" controls="true" src="" autoplay="true"></video>
+</div>
+<script>
+// Get the drop zone element
+//const dropZone = document.getElementById('drop-zone');
+const dropZone = document.getElementById('vid');
+const vid = document.getElementById('vid');
+// Prevent the default behavior of the browser when a file is dragged over the drop zone
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    //dropZone.style.border = '2px dashed #000'; // Change the border to indicate a valid drop area
+});
+
+let fileList = [];
+let fileIdx = 0;
+// Handle the file drop event
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    //dropZone.style.border = '2px dashed #ccc'; // Reset the border style
+
+    const files = e.dataTransfer.files; // Get the dropped files
+    while(fileList.length > 0) {
+        fileList.pop();
+    }
+    fileList.push(...files);
+    fileIdx = 0;
+
+    // Process the dropped files (e.g., upload or display them)
+    for (const file of files) {
+        console.log('Dropped file:', URL.createObjectURL(file));
+    }
+    const vid = document.getElementById('vid');
+    vid.src = URL.createObjectURL(files[0]);
+});
+
+function shuffleArray(array) {
+    compoundList = [];
+    for (let i = 0; i<array.length; i++) {
+        compoundList[i] = {number: Math.random(), file: array[i]};
+    }
+    compoundList.sort(function(a,b){return a.number - b.number});
+    for (let i = 0; i<array.length; i++) {
+        array[i] = compoundList[i].file;
+    }
+}
+
+function updateViewportInfo() {
+    const width = window.innerWidth || document.documentElement.clientWidth;
+    const height = window.innerHeight || document.documentElement.clientHeight;
+    const video = document.getElementById('vid');
+    const vwidth = video.videoWidth;
+    const vheight = video.videoHeight;
+    console.log(width, height, vwidth, vheight);
+    const aspect = width * 1.0 / height;
+    const vaspect = vwidth * 1.0 / vheight;
+
+    if (aspect < vaspect) {
+        // video wider
+        vid.style.height = '100vh';
+        vid.style.width = 'auto';
+    } else {
+        vid.style.width = '100vw';
+        vid.style.height = 'auto';
+    }
+}
+
+// Initial update
+updateViewportInfo();
+
+function updateTitle() {
+    document.title = fileList[fileIdx].name;
+}
+
+// Listen for the resize event
+window.addEventListener('resize', updateViewportInfo);
+vid.addEventListener('loadedmetadata', updateViewportInfo)
+vid.addEventListener('loadedmetadata', updateTitle)
+
+function playNextVideo() {
+    fileIdx = (fileIdx + 1) % fileList.length;
+    vid.src = URL.createObjectURL(fileList[fileIdx]);
+    vid.load(); // Load the new video source
+    vid.play(); // Start playing the new video
+}
+
+function playPrevVideo() {
+    fileIdx = (fileIdx + fileList.length - 1) % fileList.length;
+    vid.src = URL.createObjectURL(fileList[fileIdx]);
+    vid.load(); // Load the new video source
+    vid.play(); // Start playing the new video
+}
+
+vid.addEventListener('keydown', (e) => {
+    if (e.key === "s") {
+        shuffleArray(fileList);
+    }
+    if(e.key === "p"){
+        playPrevVideo();
+    }
+    if(e.key === "n"){
+        playNextVideo();
+    }
+    console.log(e.key);
+});
+
+navigator.mediaSession.setActionHandler('previoustrack', playPrevVideo);
+navigator.mediaSession.setActionHandler('nexttrack', playNextVideo);
+
+vid.addEventListener('ended', playNextVideo);
+</script>
+</body>
+</html>
